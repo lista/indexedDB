@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+
+  <body>
+    <script>
+
+      var db;
+      document.addEventListener("DOMContentLoaded", function() {
+        function openDatabase() {
+           var openRequest = localDatabase.indexedDB.open("browser_security",1);
+           openRequest.onerror = function(e) {
+              console.log("Database error: " + e.target.errorCode);
+           };
+           openRequest.onsuccess = function(e) {
+
+              console.log("Database opened");
+              db = e.target.result;
+
+              //Listen for add clicks
+              document.querySelector("#login").addEventListener("click", getUser, false);
+           };
+        }
+      },false);
+
+
+      function getUser(e) {
+        var email = document.querySelector("#email").value;
+
+        var password = document.querySelector("#password").value;
+
+        if(email == "" && password == "") return;
+
+        var transaction = db.transaction(["users"],"readonly");
+        var store = transaction.objectStore("users");
+        var index = store.index("email");
+
+        // //Make the range
+        // var range;
+        // if(email != "" && password != "") {
+        //   range = IDBKeyRange.bound(email);
+
+          index.openCursor().onsuccess = function(e) {
+          var cursor = e.target.result;
+          if(cursor) {
+            var userEmail= cursor.value.email;
+          }
+          
+          if (email == userEmail){
+            console.log("Login Successful");
+          }
+          else{
+            console.log("Login Error");
+          }
+
+        }
+
+      }
+    </script>
+
+
+    <h1>Member Login:</h1>
+    <input type="email" id="email" placeholder="Email"><br/>
+    <input type="password" id="password" placeholder="Password"><br/>
+    <button id="login">Login</button>
+
+    <p/>
+  </body>
+</html>
