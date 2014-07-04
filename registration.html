@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+	<head>
+	</head>
+    
+	<body>
+
+		<script>
+			var db;
+
+			function indexedDBOk() {
+				return "indexedDB" in window;
+			}
+
+			document.addEventListener("DOMContentLoaded", function() {
+
+				//Check if indexedDB is not supported.
+				if(!indexedDBOk) return;
+
+				var openRequest = indexedDB.open("browser_security",1);
+
+				openRequest.onupgradeneeded = function(e) {
+					var thisDB = e.target.result;
+
+					if(!thisDB.objectStoreNames.contains("users")) {
+						var os = thisDB.createObjectStore("users", {autoIncrement:true});
+						//I want to get by name later
+						//os.createIndex("name", "name", {unique:false});
+						//I want email to be unique
+						os.createIndex("email", "email", {unique:true});
+					}
+				}
+
+				openRequest.onsuccess = function(e) {
+
+					db = e.target.result;
+
+					//Listen for add clicks
+					document.querySelector("#register").addEventListener("click", addUser, false);
+
+				}	
+
+				openRequest.onerror = function(e) {
+					//Do something for the error
+				}
+
+
+			},false);
+
+
+			function addUser(e) {
+				var name = document.querySelector("#name").value;
+				var email = document.querySelector("#email").value;
+				var password = document.querySelector("#password").value;
+
+				console.log("About to add "+name+"/"+email);
+
+				//Create a transaction
+				var transaction = db.transaction(["users"],"readwrite");
+				//Ask for the objectStore
+				var store = transaction.objectStore("users");
+
+				//Define a user
+				var user = {
+					name:name,
+					email:email,
+					password:password,
+					created:new Date()
+				}
+
+				//Perform the add
+				var request = store.add(user);
+
+				request.onerror = function(e) {
+					alert("Sorry, that email address already exists.");
+					console.log("Error",e.target.error.name);
+					console.dir(e.target);
+					//some type of error handler
+				}
+
+				request.onsuccess = function(e) {
+					console.log("Woot! Did it");
+				}
+			}
+		</script>
+
+		<input type="text" id="name" placeholder="Name"><br/>
+		<input type="email" id="email" placeholder="Email"><br/>
+		<input type="password" id="password" placeholder="Password"><br/>
+		<button id="register">Register</button>
+
+		<p/>
+
+		<!-- Starting with: <input type="text" id="nameSearch" placeholder="Name"><br/>
+		Ending with: <input type="text" id="nameSearchEnd" placeholder="Name"><br/>
+		<button id="getButton">Get By Name Range</button>
+
+		<p/> -->
+
+		<div id="status"></div>
+	</body>
+</html>
